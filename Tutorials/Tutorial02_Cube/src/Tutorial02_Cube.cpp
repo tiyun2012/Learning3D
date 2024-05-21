@@ -29,6 +29,8 @@
 #include "MapHelper.hpp"
 #include "GraphicsUtilities.h"
 #include "ColorConversion.h"
+#include "ShaderMacroHelper.hpp"
+#include "Timer.hpp"
 
 namespace Diligent
 {
@@ -36,6 +38,85 @@ namespace Diligent
 SampleBase* CreateSample()
 {
     return new Tutorial02_Cube();
+}
+
+RefCntAutoPtr<IPipelineState> CreatePSO(IRenderDevice* pDevice, Uint32 ID)
+{
+    ShaderCreateInfo ShaderCI;
+    ShaderCI.SourceLanguage                  = SHADER_SOURCE_LANGUAGE_GLSL;
+    ShaderCI.Desc.UseCombinedTextureSamplers = true;
+    ShaderMacroHelper Macros;
+
+    ShaderCI.CompileFlags = SHADER_COMPILE_FLAG_ASYNCHRONOUS;
+
+    srand((unsigned)(time(NULL)));
+    Macros.AddShaderMacro("RANDOM_ID", rand());
+
+    ShaderCI.Macros = Macros;
+
+    Timer T;
+
+    // In this tutorial, we will load shaders from file. To be able to do that,
+    // we need to create a shader source stream factory
+    RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderSourceFactory;
+    pDevice->GetEngineFactory()->CreateDefaultShaderSourceStreamFactory(nullptr, &pShaderSourceFactory);
+    ShaderCI.pShaderSourceStreamFactory = pShaderSourceFactory;
+
+    // Create a vertex shader
+    RefCntAutoPtr<IShader> pVS;
+    {
+        ShaderCI.Desc.ShaderType = SHADER_TYPE_VERTEX;
+        ShaderCI.FilePath        = "Test.vsh";
+
+        auto start = T.GetElapsedTime();
+        pDevice->CreateShader(ShaderCI, &pVS);
+        LOG_INFO_MESSAGE("Create VS ", ID, ": ", (T.GetElapsedTime() - start) * 1000, " ms");
+    }
+
+    // Create a pixel shader
+    RefCntAutoPtr<IShader> pPS;
+    {
+        ShaderCI.Desc.ShaderType = SHADER_TYPE_PIXEL;
+        ShaderCI.FilePath        = "Test.psh";
+        auto start               = T.GetElapsedTime();
+        pDevice->CreateShader(ShaderCI, &pPS);
+        LOG_INFO_MESSAGE("Create PS ", ID, ": ", (T.GetElapsedTime() - start) * 1000, " ms");
+    }
+
+    GraphicsPipelineStateCreateInfo PSOCreateInfo;
+    PSOCreateInfo.PSODesc.Name                                  = "Test PSO";
+    PSOCreateInfo.PSODesc.PipelineType                          = PIPELINE_TYPE_GRAPHICS;
+    PSOCreateInfo.GraphicsPipeline.NumRenderTargets             = 1;
+    PSOCreateInfo.GraphicsPipeline.RTVFormats[0]                = TEX_FORMAT_RGBA8_UNORM;
+    PSOCreateInfo.GraphicsPipeline.DSVFormat                    = TEX_FORMAT_D32_FLOAT;
+    PSOCreateInfo.GraphicsPipeline.PrimitiveTopology            = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    PSOCreateInfo.GraphicsPipeline.RasterizerDesc.CullMode      = CULL_MODE_BACK;
+    PSOCreateInfo.GraphicsPipeline.DepthStencilDesc.DepthEnable = True;
+
+    PSOCreateInfo.Flags = PSO_CREATE_FLAG_ASYNCHRONOUS;
+
+    // Define vertex shader input layout
+    LayoutElement LayoutElems[] =
+        {
+            LayoutElement{0, 0, 3, VT_FLOAT32, False},
+            LayoutElement{1, 0, 4, VT_FLOAT32, False},
+        };
+    // clang-format on
+    PSOCreateInfo.GraphicsPipeline.InputLayout.LayoutElements = LayoutElems;
+    PSOCreateInfo.GraphicsPipeline.InputLayout.NumElements    = _countof(LayoutElems);
+
+    PSOCreateInfo.pVS = pVS;
+    PSOCreateInfo.pPS = pPS;
+
+    // Define variable type that will be used by default
+    PSOCreateInfo.PSODesc.ResourceLayout.DefaultVariableType = SHADER_RESOURCE_VARIABLE_TYPE_STATIC;
+
+    RefCntAutoPtr<IPipelineState> pPSO;
+    auto                          start = T.GetElapsedTime();
+    pDevice->CreateGraphicsPipelineState(PSOCreateInfo, &pPSO);
+    LOG_INFO_MESSAGE("Create PSO ", ID, ": ", (T.GetElapsedTime() - start) * 1000, " ms");
+
+    return pPSO;
 }
 
 void Tutorial02_Cube::CreatePipelineState()
@@ -143,6 +224,11 @@ void Tutorial02_Cube::CreatePipelineState()
 
     // Create a shader resource binding object and bind all static resources in it
     m_pPSO->CreateShaderResourceBinding(&m_pSRB, true);
+
+    for (Uint32 i = 0; i < 50; ++i)
+    {
+        m_PSOs.emplace_back(CreatePSO(m_pDevice, i));
+    }
 }
 
 void Tutorial02_Cube::CreateVertexBuffer()
@@ -274,6 +360,16 @@ void Tutorial02_Cube::Render()
 void Tutorial02_Cube::Update(double CurrTime, double ElapsedTime)
 {
     SampleBase::Update(CurrTime, ElapsedTime);
+
+    Uint32 NumPSOReady = 0;
+    for (auto& pPSO : m_PSOs)
+    {
+        if (pPSO->GetStatus() == PIPELINE_STATE_STATUS_READY)
+            ++NumPSOReady;
+        else
+            break;
+    }
+    LOG_INFO_MESSAGE("Num PSO ready: ", NumPSOReady);
 
     // Apply rotation
     float4x4 CubeModelTransform = float4x4::RotationY(static_cast<float>(CurrTime) * 1.0f) * float4x4::RotationX(-PI_F * 0.1f);

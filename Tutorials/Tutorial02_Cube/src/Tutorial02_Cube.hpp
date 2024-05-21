@@ -54,6 +54,8 @@ private:
     RefCntAutoPtr<IBuffer>                m_CubeIndexBuffer;
     RefCntAutoPtr<IBuffer>                m_VSConstants;
     float4x4                              m_WorldViewProjMatrix;
+
+    std::vector<RefCntAutoPtr<IPipelineState>> m_PSOs;
 };
 
 } // namespace Diligent
