@@ -154,7 +154,8 @@ void USDViewer::Initialize(const SampleInitInfo& InitInfo)
 {
     SampleBase::Initialize(InitInfo);
 
-    // Create render state cache
+// Create render state cache
+#if 0
     {
         RenderStateCacheCreateInfo StateCacheCI;
         StateCacheCI.LogLevel = RENDER_STATE_CACHE_LOG_LEVEL_NORMAL;
@@ -189,6 +190,9 @@ void USDViewer::Initialize(const SampleInitInfo& InitInfo)
         const bool        SaveOnExit = true;
         m_DeviceWithCache.LoadCacheFromFile(CachePath.c_str(), SaveOnExit);
     }
+#else
+    m_DeviceWithCache = RenderDeviceWithCache<false>{m_pDevice};
+#endif
 
     ImGuizmo::SetGizmoSizeClipSpace(0.15f);
 
@@ -298,7 +302,8 @@ void USDViewer::LoadStage()
     DelegateCI.UseIndexPool      = m_UseIndexPool;
     DelegateCI.EnableShadows     = true;
 
-    DelegateCI.AllowHotShaderReload = m_EnableHotShaderReload;
+    DelegateCI.AllowHotShaderReload   = m_EnableHotShaderReload;
+    DelegateCI.AsyncShaderCompilation = true;
 
     if (m_DeviceWithCache.GetDeviceInfo().Features.BindlessResources)
     {
