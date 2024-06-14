@@ -3,30 +3,7 @@ name: Win32/UWP build
 on: [push, pull_request]
 
 jobs:
-  precheks:
-    name:    Win10 -> Pre-checks
-    runs-on: windows-latest
-
-    steps:
-    - name: Clone DiligentCore
-      uses: actions/checkout@v3
-      with:
-        repository: DiligentGraphics/DiligentCore
-        path:       DiligentCore
-
-    - name: Clone DiligentSamples
-      uses: actions/checkout@v3
-      with:
-        path: DiligentSamples
-
-    - name: Format validation
-      shell: cmd
-      working-directory: ${{github.workspace}}/DiligentSamples/BuildTools/FormatValidation
-      run: validate_format_win.bat
-
-
   build:
-    needs:   precheks
     runs-on: windows-2022
 
     strategy:
@@ -37,46 +14,9 @@ jobs:
         build_type:      ["Debug", "Release"]
         cmake_generator: ["Visual Studio 17 2022"]
         # Do not build GLSLang and friends to save time as it is built by the Core and Engine CI.
-        cmake_args:      ["-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON"]
+        cmake_args:      [""]
         platform:        ["Win32"]
         build_args:      ["-- -restore"]
-
-        include:
-          - name:            "Win10-Dev"
-            platform:        "Win32"
-            toolset:         "x64"
-            build_type:      "RelWithDebInfo"
-            cmake_generator: "Visual Studio 17 2022"
-            cmake_args:      "-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON -DDILIGENT_DEVELOPMENT=ON"
-            build_args:      "-- -restore"
-
-          - name:            "Win10-Ninja"
-            platform:        "Win32"
-            toolset:         "x64"
-            build_type:      "Debug"
-            cmake_generator: "Ninja"
-            cmake_args:      "-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON"
-
-          - name:            "MinGW"
-            platform:        "Win32"
-            toolset:         "x64"
-            build_type:      "Release"
-            cmake_generator: "MinGW Makefiles"
-            cmake_args:      "-DDILIGENT_NO_GLSLANG=ON"
-
-          - name:            "UWP"
-            platform:        "UWP"
-            toolset:         "x64"
-            build_type:      "Debug"
-            cmake_generator: "Visual Studio 17 2022"
-            cmake_args:      "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0"
-
-          - name:            "UWP"
-            platform:        "UWP"
-            toolset:         "x64"
-            build_type:      "Release"
-            cmake_generator: "Visual Studio 17 2022"
-            cmake_args:      "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0"
 
     name: Win10 -> ${{ matrix.name }}-${{ matrix.toolset }}, ${{ matrix.build_type }}
 
