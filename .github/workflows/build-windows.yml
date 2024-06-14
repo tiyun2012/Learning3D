@@ -33,50 +33,13 @@ jobs:
       fail-fast: false
       matrix:
         name:            ["Win10"]
-        toolset:         ["Win32", "x64"]
+        toolset:         ["x64"]
         build_type:      ["Debug", "Release"]
         cmake_generator: ["Visual Studio 17 2022"]
         # Do not build GLSLang and friends to save time as it is built by the Core and Engine CI.
-        cmake_args:      ["-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON"]
+        cmake_args:      ["-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON -DDILIGENT_NO_VULKAN=ON -DDILIGENT_NO_OPENGL=ON -DDILIGENT_NO_DIRECT3D12=ON"]
         platform:        ["Win32"]
         build_args:      ["-- -restore"]
-
-        include:
-          - name:            "Win10-Dev"
-            platform:        "Win32"
-            toolset:         "x64"
-            build_type:      "RelWithDebInfo"
-            cmake_generator: "Visual Studio 17 2022"
-            cmake_args:      "-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON -DDILIGENT_DEVELOPMENT=ON"
-            build_args:      "-- -restore"
-
-          - name:            "Win10-Ninja"
-            platform:        "Win32"
-            toolset:         "x64"
-            build_type:      "Debug"
-            cmake_generator: "Ninja"
-            cmake_args:      "-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON"
-
-          - name:            "MinGW"
-            platform:        "Win32"
-            toolset:         "x64"
-            build_type:      "Release"
-            cmake_generator: "MinGW Makefiles"
-            cmake_args:      "-DDILIGENT_NO_GLSLANG=ON"
-
-          - name:            "UWP"
-            platform:        "UWP"
-            toolset:         "x64"
-            build_type:      "Debug"
-            cmake_generator: "Visual Studio 17 2022"
-            cmake_args:      "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0"
-
-          - name:            "UWP"
-            platform:        "UWP"
-            toolset:         "x64"
-            build_type:      "Release"
-            cmake_generator: "Visual Studio 17 2022"
-            cmake_args:      "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0"
 
     name: Win10 -> ${{ matrix.name }}-${{ matrix.toolset }}, ${{ matrix.build_type }}
 

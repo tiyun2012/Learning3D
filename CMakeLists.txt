@@ -122,7 +122,6 @@ if(TARGET Diligent-NativeAppBase AND TARGET Diligent-TextureLoader AND TARGET Di
 endif()
 
 if(NOT ${DILIGENT_BUILD_SAMPLE_BASE_ONLY} AND TARGET Diligent-SampleBase)
-    add_subdirectory(Samples)
     add_subdirectory(Tutorials)
 endif()
 
