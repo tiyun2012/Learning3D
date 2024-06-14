@@ -14,7 +14,7 @@ jobs:
         build_type:      ["Debug", "Release"]
         cmake_generator: ["Visual Studio 17 2022"]
         # Do not build GLSLang and friends to save time as it is built by the Core and Engine CI.
-        cmake_args:      ["-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON -DDILIGENT_NO_VULKAN=ON -DDILIGENT_NO_OPENGL=ON -DDILIGENT_NO_DIRECT3D12=ON"]
+        cmake_args:      ["-DDILIGENT_NO_GLSLANG=ON -DDILIGENT_NO_HLSL=ON -DDILIGENT_NO_VULKAN=ON"]
         platform:        ["Win32"]
         build_args:      ["-- -restore"]
 
